@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { CURRENCY_OPTIONS } from '../config';
 
-export default function SettingsScreen({ settings, theme, onSave }) {
+export default function SettingsScreen({ settings, theme, onSave, onTestConnection }) {
   const [currency, setCurrency] = useState(settings.currency);
   const [darkTheme, setDarkTheme] = useState(settings.darkTheme);
   const [apiBaseUrl, setApiBaseUrl] = useState(settings.apiBaseUrl);
@@ -47,6 +47,13 @@ export default function SettingsScreen({ settings, theme, onSave }) {
         placeholderTextColor={theme.muted}
       />
 
+      <Pressable
+        style={[styles.testBtn, { borderColor: theme.border, backgroundColor: theme.cardSoft }]}
+        onPress={() => onTestConnection?.(apiBaseUrl.trim())}
+      >
+        <Text style={{ color: theme.text, fontWeight: '600' }}>Test API Connection</Text>
+      </Pressable>
+
       <Pressable style={[styles.saveBtn, { backgroundColor: theme.button, borderColor: theme.border }]} onPress={save}>
         <Text style={{ color: theme.buttonText, fontWeight: '700' }}>Save Settings</Text>
       </Pressable>
@@ -86,6 +93,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  testBtn: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
   saveBtn: {
     marginTop: 16,

@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Constants from 'expo-constants';
 import PropertiesScreen from './src/screens/PropertiesScreen';
 import PropertyDetailsScreen from './src/screens/PropertyDetailsScreen';
 import TenancyEditorScreen from './src/screens/TenancyEditorScreen';
@@ -22,6 +23,18 @@ import {
 import { DEFAULT_API_BASE_URL } from './src/config';
 
 const Stack = createNativeStackNavigator();
+
+const getInitialApiBaseUrl = () => {
+  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost;
+  if (!hostUri) return DEFAULT_API_BASE_URL;
+
+  const host = hostUri.split(':')[0];
+  if (!host || host === 'localhost' || host === '127.0.0.1') {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  return `http://${host}:3000`;
+};
 
 const getTheme = (darkTheme) => {
   if (!darkTheme) {
@@ -62,7 +75,7 @@ export default function App() {
   const [settings, setSettings] = useState({
     currency: 'GBP',
     darkTheme: false,
-    apiBaseUrl: DEFAULT_API_BASE_URL,
+    apiBaseUrl: getInitialApiBaseUrl(),
   });
 
   const theme = useMemo(() => getTheme(settings.darkTheme), [settings.darkTheme]);
@@ -123,19 +136,7 @@ export default function App() {
   };
 
   return (
-    <NavigationContainer
-      theme={{
-        dark: settings.darkTheme,
-        colors: {
-          primary: theme.button,
-          background: theme.background,
-          card: theme.card,
-          text: theme.text,
-          border: theme.border,
-          notification: theme.error,
-        },
-      }}
-    >
+    <NavigationContainer>
       <StatusBar style={settings.darkTheme ? 'light' : 'dark'} />
       <Stack.Navigator
         screenOptions={{
@@ -259,6 +260,22 @@ export default function App() {
             <SettingsScreen
               settings={settings}
               theme={theme}
+              onTestConnection={async (apiBaseUrl) => {
+                try {
+                  const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/properties`);
+                  if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                  }
+                  Alert.alert('Connection OK', `Connected to ${apiBaseUrl}`);
+                } catch (error) {
+                  Alert.alert(
+                    'Connection Failed',
+                    `Could not reach ${apiBaseUrl}.\n\n` +
+                      'Check that backend is running and your phone/PC are on the same Wi-Fi.\n\n' +
+                      `Details: ${error.message}`,
+                  );
+                }
+              }}
               onSave={(next) => {
                 setSettings(next);
                 navigation.goBack();
